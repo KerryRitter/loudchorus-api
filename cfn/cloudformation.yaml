@@ -1,61 +1,57 @@
-AWSTemplateFormatVersion: 2010-09-09
-Transform: AWS::Serverless-2016-10-31
-Description: An AWS Serverless API
 Parameters:
+  AppName:
+    Type: String
   Environment:
     Type: String
-    Description: Environment; dev, sit, stg, prod
-    AllowedValues:
-    - dev
-    - sit
-    - stg
-    - prod
+  DomainName:
+    Type: String
+  HostedZoneId:
+    Type: String
+  CertificateArn:
+    Type: String
+  UiDomainName:
+    Type: String
+  GoogleAppId:
+    Type: String
+  GoogleAppSecret:
+    Type: String
+  FacebookAppId:
+    Type: String
+  FacebookAppSecret:
+    Type: String
+
 Resources:
-  LoudChorusApiRole:
-    Type: AWS::IAM::Role
+  Cognito:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      RoleName: !Sub "LoudChorusApiApi-${Environment}"
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-  LoudChorusApiLambda:
-    Type: AWS::Serverless::Function
+      TemplateURL: cloudformation-cognito.yaml
+      Parameters:
+        AppName: !Ref AppName
+        Environment: !Ref Environment
+        UiDomainName: !Ref UiDomainName 
+        GoogleAppId: !Ref GoogleAppId 
+        GoogleAppSecret: !Ref GoogleAppSecret 
+        FacebookAppId: !Ref FacebookAppId 
+        FacebookAppSecret: !Ref FacebookAppSecret 
+
+  Api:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Handler: dist/lambda-entry-point.handler
-      Runtime: nodejs12.x
-      CodeUri: artifacts.zip
-      MemorySize: 512
-      Timeout: 900
-      Role: !GetAtt LoudChorusApiRole.Arn
-      Environment:
-        Variables:
-          ENVIRONMENT: !Ref Environment
-          NODE_ENV: !Ref Environment
-  LoudChorusApiApi:
-    Type: AWS::Serverless::Api
-    DependsOn: LoudChorusApiLambda
+      TemplateURL: cloudformation-api.yaml
+      Parameters:
+        AppName: !Ref AppName
+        Environment: !Ref Environment
+        DomainName: !Ref DomainName
+        HostedZoneId: !Ref HostedZoneId
+        CertificateArn: !Ref CertificateArn
+        UiDomainName: !Ref UiDomainName
+        IdpClientId: !GetAtt Cognito.Outputs.IdpClientId
+        IdpBasePath: !GetAtt Cognito.Outputs.IdpBasePath
+        JwksUrl: !GetAtt Cognito.Outputs.JkwsUrl
+
+  Qldb:
+    Type: AWS::CloudFormation::Stack
     Properties:
-      Name: !Sub "LoudChorusApiApi-${Environment}"
-      StageName: !Ref Environment
-      DefinitionBody:
-        Fn::Transform:
-          Name: AWS::Include
-          Parameters:
-            Location: openapi.yaml
-      EndpointConfiguration: EDGE
-  LoudChorusApiGatewayPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref LoudChorusApiLambda
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LoudChorusApiApi}/${Environment}/*"
+      TemplateURL: cloudformation-qldb.yaml
+      Parameters:
+        AppName: !Ref AppName

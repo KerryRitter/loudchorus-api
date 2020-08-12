@@ -1,0 +1,118 @@
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  AppName:
+    Type: String
+  Environment:
+    Type: String
+  DomainName:
+    Type: String
+  HostedZoneId:
+    Type: String
+  CertificateArn:
+    Type: String
+  IdpClientId:
+    Type: String
+  IdpBasePath:
+    Type: String
+  JwksUrl:
+    Type: String
+  UiDomainName:
+    Type: String
+
+Resources:
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'content-type,authorization'"
+        AllowOrigin: !Sub "'https://${UiDomainName}'"
+        AllowCredentials: true
+
+  WorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  KmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub ${AppName}-kms-key-${Environment}
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt WorkerRole.Arn
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+            Resource: '*'
+
+  ApiLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref AppName
+      CodeUri: artifacts.zip
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          CLIENT_ID: !Ref IdpClientId
+          IDP_BASEPATH: !Ref IdpBasePath
+          JWKS_URI: !Ref JwksUrl
+          KMS_KEY: !Ref KmsKey
+          ALLOW_ORIGIN: !Sub https://${UiDomainName}
+          UI_DOMAIN_NAME: !Ref UiDomainName
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: '{proxy+}'
+            Method: any
+            RestApiId: !Ref Api
+      Handler: dist/lambda-entry-point.handler
+      MemorySize: 512
+      Role: !GetAtt WorkerRole.Arn
+      Runtime: nodejs12.x
+      Timeout: 30
+
+  ApiGatewayDomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      CertificateArn: !Ref CertificateArn
+      DomainName: !Ref DomainName
+
+  BasePathMapping:
+    Type: AWS::ApiGateway::BasePathMapping
+    DependsOn: ApiStage
+    Properties:
+      DomainName: !Ref ApiGatewayDomainName
+      RestApiId: !Ref Api
+      Stage: !Ref Environment
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt ApiGatewayDomainName.DistributionDomainName
+        HostedZoneId: !GetAtt ApiGatewayDomainName.DistributionHostedZoneId
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A

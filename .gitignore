@@ -1,4 +1,5 @@
 # compiled output
+/cfn/*-packaged.yaml
 /dist
 /node_modules
 

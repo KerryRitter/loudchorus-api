@@ -1,0 +1,12 @@
+{
+  "Environment": "dev",
+  "AppName": "loudchorus-api",
+  "HostedZoneId": "Z033379612958PWIQ840T",
+  "CertificateArn": "arn:aws:acm:us-east-1:343192590557:certificate/d35ac98c-f257-46a6-90eb-c59f4b4ab6c9",
+  "UiDomainName": "loudchorus.beermoney.dev",
+  "DomainName": "loudchorus-api.beermoney.dev",
+  "FacebookAppSecret": "",
+  "FacebookAppId": "",
+  "GoogleAppSecret": "",
+  "GoogleAppId": ""
+}

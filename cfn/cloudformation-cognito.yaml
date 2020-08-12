@@ -1,0 +1,108 @@
+Parameters:
+  AppName:
+    Type: String
+  Environment:
+    Type: String
+  UiDomainName:
+    Type: String
+  GoogleAppId:
+    Type: String
+  GoogleAppSecret:
+    Type: String
+  FacebookAppId:
+    Type: String
+  FacebookAppSecret:
+    Type: String
+
+Conditions:
+  IsDev: !Equals [!Ref Environment, 'dev']
+  UseFacebook: !Not [!Equals [!Ref FacebookAppId, '']]
+  UseGoogle: !Not [!Equals [!Ref GoogleAppId, '']]
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      UserPoolName: !Sub ${AppName}-userpool-${Environment}
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !If [IsDev, !Sub '${AppName}-${Environment}', !Sub '${AppName}']
+      UserPoolId: !Ref UserPool
+
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Condition: UseGoogle
+    Properties:
+      AttributeMapping:
+        email: email
+        name: name
+      ProviderDetails:
+        client_id: !Ref GoogleAppId
+        client_secret: !Ref GoogleAppSecret
+        authorize_scopes: profile email openid
+      ProviderName: Google
+      ProviderType: Google
+      UserPoolId: !Ref UserPool
+
+  FacebookIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Condition: UseFacebook
+    Properties:
+      AttributeMapping:
+        email: email
+        name: name
+      ProviderDetails:
+        client_id: !Ref FacebookAppId
+        client_secret: !Ref FacebookAppSecret
+        authorize_scopes: profile email openid
+      ProviderName: Facebook
+      ProviderType: Facebook
+      UserPoolId: !Ref UserPool
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    # DependsOn:
+      # - !If [UseGoogle, GoogleIdentityProvider, !Ref AWS::NoValue]
+      # - !If [UseFacebook, FacebookIdentityProvider, !Ref AWS::NoValue]
+    Properties:
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+        - phone
+        - email
+        - openid
+        - profile
+      CallbackURLs:
+        - !Sub https://${UiDomainName}/account/login_callback/
+        - !If [IsDev, http://localhost:4200/account/login_callback/, !Ref AWS::NoValue]
+      ClientName: !Sub ${AppName}-${Environment}
+      LogoutURLs:
+        - !Sub https://${UiDomainName}/account/logout_callback/
+        - !If [IsDev, http://localhost:4200/account/logout_callback/, !Ref AWS::NoValue]
+      SupportedIdentityProviders:
+        - COGNITO
+        # - !If [UseGoogle, 'Google', !Ref AWS::NoValue]
+        # - !If [UseFacebook, 'Facebook', !Ref AWS::NoValue]
+      UserPoolId: !Ref UserPool
+
+  UserPoolCustomization:
+    Type: AWS::Cognito::UserPoolUICustomizationAttachment
+    Properties:
+      ClientId: !Ref UserPoolClient
+      CSS: '.background-customizable { background: #f5f7fa !important; } .banner-customizable { background: #f5f7fa !important; } .submitButton-customizable { background: #5567ff !important; }'
+      UserPoolId: !Ref UserPool
+
+Outputs:
+  IdpClientId:
+    Value: !Ref UserPoolClient
+  IdpBasePath:
+    Value: !Sub https://${UserPoolDomain}.auth.${AWS::Region}.amazoncognito.com
+  JkwsUrl:
+    Value: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}/.well-known/jwks.json

@@ -1,61 +1,96 @@
-const { runDeployment, runDeploymentStep } = require('@aws-serverless-tools/cli');
+const { exec } = require("child_process");
+const { readFileSync } = require("fs");
 
-runDeployment(async ({ fileSystem, npm, cfn }) => {
-  // await runDeploymentStep({
-  //   stepName: 'Clearing artifacts',
-  //   action: () => fileSystem.delete('cfn/artifacts.zip'),
-  // });
+class DeployUtils {
+  /**
+   * @param {string} command
+   * @returns {{params: { [key: string]: string }, paramsString: string}}
+   */
+  getParameters() {
+    const params = JSON.parse(readFileSync('./cfn/parameters.json'));
+    const paramsString = Object.keys(params).map(key => JSON.stringify(`${key}=${params[key]}`)).join(' ');
+    return {
+      params,
+      paramsString,
+    }
+  }
 
-  // await runDeploymentStep({
-  //   stepName: 'Running clean NPM install',
-  //   action: () => npm.cleanInstall(),
-  // });
+  /**
+   * @param {string} command
+   * @returns {Promise<void>}
+   */
+  runCommand(command) {
+    if (Array.isArray(command)) {
+      command = command.join(' ');
+    }
+    return new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+          if (error) {
+              return reject(error);
+          }
+          if (stderr) {
+              return reject(stderr);
+          }
+          return resolve(stdout);
+      });
+    });
+  } 
+}
 
-  // await runDeploymentStep({
-  //   stepName: 'Running lint',
-  //   action: () => npm.runScript('lint'),
-  // });
+class ApiDeployer {
+  utils = new DeployUtils();
 
-  // await runDeploymentStep({
-  //   stepName: 'Running build',
-  //   action: () => npm.runScript('build'),
-  // });
+  /**
+   * @param { { stackName: string, profile: string, stagingBucket: string }} options 
+   */
+  constructor(options) {
+    this.options = options;
+  }
 
-  // await runDeploymentStep({
-  //   stepName: 'Running prune',
-  //   action: () => npm.prune(true),
-  // });
+  async deploy() {
+    await this.package();
+    await this.cfn();
+  }
 
-  // await runDeploymentStep({
-  //   stepName: 'Zipping artifacts',
-  //   action: () => fileSystem.zipFolder([
-  //     fileSystem.getCwdPath('node_modules'),
-  //     fileSystem.getCwdPath('dist')
-  //   ],
-  //     fileSystem.getCwdPath('cfn/artifacts.zip')
-  //   ),
-  // });
+  async package() {
+    console.log(await this.utils.runCommand([
+      `aws cloudformation package`,
+      `--template-file ./cfn/cloudformation.yaml`,
+      `--s3-bucket ${this.options.stagingBucket}`,
+      `--output-template-file ./cfn/cloudformation-packaged.yaml`,
+      `--profile ${this.options.profile}`,
+    ]));
+  }
 
-  // await runDeploymentStep({
-  //   stepName: 'Packaging',
-  //   action: () => cfn.package({
-  //     templateFilePath: fileSystem.getCwdPath('cfn/cloudformation.yaml'),
-  //     outputFilePath: fileSystem.getCwdPath('cfn/cloudformation-transformed.yaml'),
-  //     packageBucket: 'kerryritter-deploy-bucket',
-  //     profile: 'personal',
-  //   }),
-  // });
+  /**
+   * @private
+   * @returns {Promise<void>}
+   */
+  async cfn() {
+    const { paramsString } = this.utils.getParameters();
 
-  await runDeploymentStep({
-    stepName: 'Deploying',
-    action: () => cfn.deploy({
-      stackname: 'loud-chorus-api',
-      parameters: [fileSystem.getCwdPath('cfn/parameters-dev.json')],
-      tags: [fileSystem.getCwdPath('cfn/tags.json')],
-      profile: 'personal',
-      region: 'us-east-1',
-      template: fileSystem.getCwdPath('cfn/cloudformation-transformed.yaml'),
-      capabilities: 'CAPABILITY_NAMED_IAM',
-    }).promise,
-  });
-});
+    try {
+      console.log(await this.utils.runCommand([
+        `aws cloudformation deploy`,
+        `--template-file ./cfn/cloudformation-packaged.yaml`,
+        `--stack-name ${this.options.stackName}`,
+        `--parameter-overrides ${paramsString}`,
+        `--profile ${this.options.profile}`,
+        `--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND`,
+      ]));
+    } catch (ex) {
+      if (!ex.message.includes('No changes')) {
+        throw ex;
+      }
+    }
+  }
+}
+
+new ApiDeployer({
+  stackName: 'loudchorus-api-dev',
+  profile: 'personal',
+  stagingBucket: 'kerryritter-deploy-bucket',
+})
+  .deploy()
+  .then(() => console.log('Done!'))
+  .catch(err => console.error(err));
