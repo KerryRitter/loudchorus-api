@@ -3,8 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NestQldbModule, QldbDriver } from 'nest-qldb';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import { SharedIniFileCredentials } from 'aws-sdk';
+import { AwsSdkModule } from 'nest-aws-sdk';
 import { AppController } from './app.controller';
 import { ArtistsModule } from './artists/artists.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -27,9 +29,11 @@ import { ArtistsModule } from './artists/artists.module';
         },
         inject: [ConfigService],
       },
-      createTablesAndIndexes: true,
+      createTablesAndIndexes: false,
     }),
     ArtistsModule,
+    MediaModule,
+    AwsSdkModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [],

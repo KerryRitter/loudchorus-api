@@ -19,6 +19,8 @@ Parameters:
     Type: String
   UiDomainName:
     Type: String
+  QldbLedgerName:
+    Type: String
 
 Resources:
   Api:
@@ -30,41 +32,6 @@ Resources:
         AllowHeaders: "'content-type,authorization'"
         AllowOrigin: !Sub "'https://${UiDomainName}'"
         AllowCredentials: true
-
-  WorkerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-
-  KmsKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: !Sub ${AppName}-kms-key-${Environment}
-      KeyPolicy:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
-            Action: kms:*
-            Resource: '*'
-          - Effect: Allow
-            Principal:
-              AWS: !GetAtt WorkerRole.Arn
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-            Resource: '*'
 
   ApiLambda:
     Type: AWS::Serverless::Function
@@ -80,6 +47,7 @@ Resources:
           KMS_KEY: !Ref KmsKey
           ALLOW_ORIGIN: !Sub https://${UiDomainName}
           UI_DOMAIN_NAME: !Ref UiDomainName
+          QLDB_LEDGER: !Ref QldbLedgerName
       Events:
         Api:
           Type: Api
@@ -89,9 +57,53 @@ Resources:
             RestApiId: !Ref Api
       Handler: dist/lambda-entry-point.handler
       MemorySize: 512
-      Role: !GetAtt WorkerRole.Arn
+      Role: !GetAtt ApiLambdaRole.Arn
       Runtime: nodejs12.x
       Timeout: 30
+
+  ApiLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: 'Qldb'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'qldb:*'
+                Resource: '*'
+
+  KmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub ${AppName}-kms-key-${Environment}
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt ApiLambdaRole.Arn
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+            Resource: '*'
 
   ApiGatewayDomainName:
     Type: AWS::ApiGateway::DomainName

@@ -48,8 +48,14 @@ class ApiDeployer {
   }
 
   async deploy() {
+    // await this.zip();
     await this.package();
     await this.cfn();
+  }
+
+  async zip() {
+    console.log(await this.utils.runCommand(`7z a ./cfn/artifacts.zip ./dist/*`));
+    console.log(await this.utils.runCommand(`7z a ./cfn/artifacts.zip ./node_modules/ -r`));
   }
 
   async package() {

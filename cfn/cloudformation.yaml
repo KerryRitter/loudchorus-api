@@ -48,6 +48,7 @@ Resources:
         IdpClientId: !GetAtt Cognito.Outputs.IdpClientId
         IdpBasePath: !GetAtt Cognito.Outputs.IdpBasePath
         JwksUrl: !GetAtt Cognito.Outputs.JkwsUrl
+        QldbLedgerName: !Sub '${AppName}-db'
 
   Qldb:
     Type: AWS::CloudFormation::Stack

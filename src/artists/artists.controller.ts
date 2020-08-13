@@ -8,11 +8,20 @@ export class ArtistsController {
     @InjectRepository(Artist) private readonly repo: Repository<Artist>,
   ) {}
 
-  @Get(':artistId')
-  async retrieve(@Param('artistId') artistId: string) {
-    const getAll = await this.repo.query({});
-    console.log(getAll);
-    return await this.repo.retrieve(artistId);
+  @Get('')
+  async getAll() {
+    const result = await this.repo.query({
+      filter: `1 = 1`,
+    });
+    return result;
+  }
+
+  @Get(':artistSlug')
+  async retrieve(@Param('artistSlug') artistSlug: string) {
+    const result = await this.repo.query({
+      filter: `slug = '${artistSlug}'`,
+    });
+    return result?.pop();
   }
 
   @Post('')
@@ -20,25 +29,25 @@ export class ArtistsController {
     return await this.repo.create(artist);
   }
 
-  @Put(':artistId')
-  async replace(@Param('artistId') artistId: string, @Body() artist: Artist) {
-    return await this.repo.replace(artistId, artist);
+  @Put(':artistSlug')
+  async replace(@Param('artistSlug') artistSlug: string, @Body() artist: Artist) {
+    return await this.repo.replace(artistSlug, artist);
   }
 
-  @Post(':artistId/tracks')
-  async createTrack(@Param('artistId') artistId: string, @Body() track: Track) {
-    const artist = await this.repo.retrieve(artistId);
+  @Post(':artistSlug/tracks')
+  async createTrack(@Param('artistSlug') artistSlug: string, @Body() track: Track) {
+    const artist = await this.repo.retrieve(artistSlug);
     artist.tracks = artist.tracks?.length
       ? [...artist.tracks, track]
       : [track];
-    return await this.repo.replace(artistId, artist);
+    return await this.repo.replace(artistSlug, artist);
   }
 
-  @Put(':artistId/tracks/:trackId')
-  async replaceTrack(@Param('artistId') artistId: string, @Param('trackId') trackId: string, @Body() track: Track) {
-    const artist = await this.repo.retrieve(artistId);
-    const trackIndex = artist.tracks.findIndex(t => t.id === trackId);
+  @Put(':artistSlug/tracks/:trackSlug')
+  async replaceTrack(@Param('artistSlug') artistSlug: string, @Param('trackSlug') trackSlug: string, @Body() track: Track) {
+    const artist = await this.repo.retrieve(artistSlug);
+    const trackIndex = artist.tracks.findIndex(t => t.slug === trackSlug);
     artist.tracks[trackIndex] = track;
-    return await this.repo.replace(artistId, artist);
+    return await this.repo.replace(artistSlug, artist);
   }
 }
