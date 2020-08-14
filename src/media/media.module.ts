@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MediaService } from './media.service';
-import { AwsSdkModule } from 'nest-aws-sdk';
-import { S3 } from 'aws-sdk';
+import { MediaController } from './media.controller';
 
 @Module({
   imports: [],
-  providers: [
-    MediaService,
-  ],
+  providers: [MediaService],
+  controllers: [MediaController],
 })
 export class MediaModule {}

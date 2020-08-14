@@ -6,7 +6,7 @@ import { AwsServiceFactory } from 'nest-aws-sdk';
 @Injectable()
 export class MediaService {
   private readonly s3: S3;
-  
+
   constructor(
     private readonly configService: ConfigService,
     awsServiceFactory: AwsServiceFactory,
@@ -18,26 +18,24 @@ export class MediaService {
     });
   }
 
-  generatePublicAssetUploadPost(file: string) {
+  generateAssetUploadPost(file: string) {
     if (!['.png', '.jpg'].includes(file.substring(file.lastIndexOf('.')))) {
       throw new BadRequestException();
     }
-    const post = this.publicAssetsS3.createPresignedPost({
-      Bucket: this.configService.get('PUBLIC_ASSETS_BUCKET'),
+
+    const post = this.s3.createPresignedPost({
+      Bucket: this.configService.get('WASABI_ASSETS_BUCKET'),
       Fields: {
         key: file,
       },
     });
+
     return post;
   }
 
-  generateMediaDownloadUrl(bucket: string, key: string) {
-    return this.publicAssetsS3.getSignedUrl('getObject', { Bucket: bucket, Key: key });
-  }
-
-  generateMediaUploadPost(file: string, sizeLimit: number) {
-    const post = this.publicAssetsS3.createPresignedPost({
-      Bucket: this.configService.get('MEDIA_BUCKET'),
+  generateTrackUploadPost(file: string, sizeLimit: number) {
+    const post = this.s3.createPresignedPost({
+      Bucket: this.configService.get('WASABI_TRACKS_BUCKET'),
       Fields: {
         key: file,
       },
@@ -46,22 +44,26 @@ export class MediaService {
     return post;
   }
 
-  async getStorageSize(prefix) {
-    let result: S3.ListObjectsOutput;
-    let storageSize = 0;
-    do {
-      result = await this.publicAssetsS3
-        .listObjects({
-          Bucket: this.configService.get('MEDIA_BUCKET'),
-          Prefix: prefix,
-          Marker: result?.NextMarker,
-        })
-        .promise();
-      for (const content of result.Contents) {
-        storageSize += content.Size;
-      }
-    } while (result.NextMarker);
-
-    return storageSize;
+  generateDownloadUrl(bucket: string, key: string) {
+    return this.s3.getSignedUrl('getObject', { Bucket: bucket, Key: key });
   }
+
+  // async getStorageSize(prefix) {
+  //   let result: S3.ListObjectsOutput;
+  //   let storageSize = 0;
+  //   do {
+  //     result = await this.publicAssetsS3
+  //       .listObjects({
+  //         Bucket: this.configService.get('MEDIA_BUCKET'),
+  //         Prefix: prefix,
+  //         Marker: result?.NextMarker,
+  //       })
+  //       .promise();
+  //     for (const content of result.Contents) {
+  //       storageSize += content.Size;
+  //     }
+  //   } while (result.NextMarker);
+
+  //   return storageSize;
+  // }
 }

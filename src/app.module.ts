@@ -7,6 +7,7 @@ import { AwsSdkModule } from 'nest-aws-sdk';
 import { AppController } from './app.controller';
 import { ArtistsModule } from './artists/artists.module';
 import { MediaModule } from './media/media.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -29,11 +30,28 @@ import { MediaModule } from './media/media.module';
         },
         inject: [ConfigService],
       },
-      createTablesAndIndexes: false,
+      createTablesAndIndexes: true,
     }),
     ArtistsModule,
     MediaModule,
-    AwsSdkModule.forRoot(),
+    AwsSdkModule.forRootAsync({
+      defaultServiceOptions: {
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (cs: ConfigService) => {
+          if (cs.get('AWS_PROFILE')) {
+            return {
+              region: 'us-east-1',
+              credentials: new SharedIniFileCredentials({
+                profile: cs.get('AWS_PROFILE'),
+              }),
+            };
+          }
+          return null;
+        },
+      },
+    }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [],
