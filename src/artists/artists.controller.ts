@@ -9,7 +9,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Artist, Track } from '../models';
-import { InjectRepository, Repository } from 'nest-qldb';
+import { InjectRepository, Repository, QldbDriver } from 'nest-qldb';
 import { User } from '../auth/user.decorator';
 import { IUser } from '../auth/user.model';
 import { AuthGuard } from '@nestjs/passport';
@@ -98,6 +98,22 @@ export class ArtistsController {
     await this.repo.replace(artistSlug, artist);
 
     return await this.retrieve(artistSlug);
+  }
+
+  // TODO
+  @Get('get/my')
+  @UseGuards(AuthGuard('jwt'))
+  async getCurrentUserArtists(
+    @User() user: IUser,
+  ) {
+    const result = await (this.repo as any).execute(`
+      SELECT a.*
+      FROM artists AS a, 
+          a.managerIds AS m
+      WHERE m.id LIKE '%${user.userId}%'
+      `, []);
+
+    return (this.repo as any).mapResultsToObjects(result);
   }
 
   private async validateOwnership(artistSlug: string, user: IUser) {
