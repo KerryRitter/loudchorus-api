@@ -5,19 +5,17 @@ Parameters:
     Type: String
   UiDomainName:
     Type: String
-  GoogleAppId:
-    Type: String
-  GoogleAppSecret:
-    Type: String
-  FacebookAppId:
-    Type: String
-  FacebookAppSecret:
-    Type: String
+  # GoogleAppId:
+  #   Type: String
+  # GoogleAppSecret:
+  #   Type: String
+  # FacebookAppId:
+  #   Type: String
+  # FacebookAppSecret:
+  #   Type: String
 
 Conditions:
   IsDev: !Equals [!Ref Environment, 'dev']
-  UseFacebook: !Not [!Equals [!Ref FacebookAppId, '']]
-  UseGoogle: !Not [!Equals [!Ref GoogleAppId, '']]
 
 Resources:
   UserPool:
@@ -35,35 +33,35 @@ Resources:
       Domain: !If [IsDev, !Sub '${AppName}-${Environment}', !Sub '${AppName}']
       UserPoolId: !Ref UserPool
 
-  GoogleIdentityProvider:
-    Type: AWS::Cognito::UserPoolIdentityProvider
-    Condition: UseGoogle
-    Properties:
-      AttributeMapping:
-        email: email
-        name: name
-      ProviderDetails:
-        client_id: !Ref GoogleAppId
-        client_secret: !Ref GoogleAppSecret
-        authorize_scopes: profile email openid
-      ProviderName: Google
-      ProviderType: Google
-      UserPoolId: !Ref UserPool
+  # GoogleIdentityProvider:
+  #   Type: AWS::Cognito::UserPoolIdentityProvider
+  #   Condition: UseGoogle
+  #   Properties:
+  #     AttributeMapping:
+  #       email: email
+  #       name: name
+  #     ProviderDetails:
+  #       client_id: !Ref GoogleAppId
+  #       client_secret: !Ref GoogleAppSecret
+  #       authorize_scopes: profile email openid
+  #     ProviderName: Google
+  #     ProviderType: Google
+  #     UserPoolId: !Ref UserPool
 
-  FacebookIdentityProvider:
-    Type: AWS::Cognito::UserPoolIdentityProvider
-    Condition: UseFacebook
-    Properties:
-      AttributeMapping:
-        email: email
-        name: name
-      ProviderDetails:
-        client_id: !Ref FacebookAppId
-        client_secret: !Ref FacebookAppSecret
-        authorize_scopes: profile email openid
-      ProviderName: Facebook
-      ProviderType: Facebook
-      UserPoolId: !Ref UserPool
+  # FacebookIdentityProvider:
+  #   Type: AWS::Cognito::UserPoolIdentityProvider
+  #   Condition: UseFacebook
+  #   Properties:
+  #     AttributeMapping:
+  #       email: email
+  #       name: name
+  #     ProviderDetails:
+  #       client_id: !Ref FacebookAppId
+  #       client_secret: !Ref FacebookAppSecret
+  #       authorize_scopes: profile email openid
+  #     ProviderName: Facebook
+  #     ProviderType: Facebook
+  #     UserPoolId: !Ref UserPool
 
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient

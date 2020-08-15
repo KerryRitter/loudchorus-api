@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NestQldbModule, QldbDriver } from 'nest-qldb';
+import { NestQldbModule, QldbDriver } from 'nest-qldb/dist';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import { SharedIniFileCredentials } from 'aws-sdk';
 import { AwsSdkModule } from 'nest-aws-sdk';

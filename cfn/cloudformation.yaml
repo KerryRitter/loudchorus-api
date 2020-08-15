@@ -11,14 +11,16 @@ Parameters:
     Type: String
   UiDomainName:
     Type: String
-  GoogleAppId:
+  ArtistPortalDomainName:
     Type: String
-  GoogleAppSecret:
-    Type: String
-  FacebookAppId:
-    Type: String
-  FacebookAppSecret:
-    Type: String
+  # GoogleAppId:
+  #   Type: String
+  # GoogleAppSecret:
+  #   Type: String
+  # FacebookAppId:
+  #   Type: String
+  # FacebookAppSecret:
+  #   Type: String
 
 Resources:
   Cognito:

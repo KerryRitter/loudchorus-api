@@ -1,4 +1,4 @@
-import { QldbTable } from 'nest-qldb';
+import { QldbTable } from 'nest-qldb/dist';
 
 @QldbTable({
   tableName: 'artists',
@@ -11,14 +11,26 @@ export class Artist {
   name: string;
   imageUrl: string;
   shortDescription: string;
-
-  tracks: Track[] = [];
-  playlists: Playlist[] = [];
+  releases: Release[] = [];
 
   ownerId: string;
   managerIds: { id: string }[];
 
   constructor(partial: Partial<Artist>) {
+    Object.assign(this, partial);
+  }
+}
+
+export class Release {
+  id?: string;
+
+  slug: string;
+  name: string;
+  imageUrl: string;
+
+  tracks: Track[] = [];
+
+  constructor(partial: Partial<Release>) {
     Object.assign(this, partial);
   }
 }
@@ -30,20 +42,7 @@ export class Track {
   name: string;
   mediaUrl: string;
 
-  playlistSlugs: { playlistSlug: string }[] = [];
-
   constructor(partial: Partial<Track>) {
-    Object.assign(this, partial);
-  }
-}
-
-export class Playlist {
-  id?: string;
-
-  slug: string;
-  name: string;
-
-  constructor(partial: Partial<Playlist>) {
     Object.assign(this, partial);
   }
 }

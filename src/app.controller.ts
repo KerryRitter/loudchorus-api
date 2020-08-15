@@ -15,7 +15,11 @@ export class AppController {
     return {
       idpBasePath: this.configService.get('IDP_BASEPATH'),
       clientId: this.configService.get('CLIENT_ID'),
-      apiBaseUrl: '',
+      uiDomainName: this.configService.get('UI_DOMAIN_NAME'),
+      artistPortalDomainName: this.configService.get(
+        'ARTIST_PORTAL_DOMAIN_NAME',
+      ),
+      apiBaseUrl: this.configService.get('API_DOMAIN_NAME'),
     };
   }
 }

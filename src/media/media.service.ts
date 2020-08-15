@@ -2,6 +2,7 @@ import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3 } from 'aws-sdk';
 import { AwsServiceFactory } from 'nest-aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MediaService {
@@ -26,7 +27,7 @@ export class MediaService {
     const post = this.s3.createPresignedPost({
       Bucket: this.configService.get('WASABI_ASSETS_BUCKET'),
       Fields: {
-        key: file,
+        key: this.generateRandomName(file),
       },
     });
 
@@ -37,7 +38,7 @@ export class MediaService {
     const post = this.s3.createPresignedPost({
       Bucket: this.configService.get('WASABI_TRACKS_BUCKET'),
       Fields: {
-        key: file,
+        key: this.generateRandomName(file),
       },
       Conditions: [['content-length-range', 0, sizeLimit]],
     });
@@ -46,6 +47,11 @@ export class MediaService {
 
   generateDownloadUrl(bucket: string, key: string) {
     return this.s3.getSignedUrl('getObject', { Bucket: bucket, Key: key });
+  }
+
+  private generateRandomName(fileName: string) {
+    const extension = fileName.split('.').pop();
+    return `${uuidv4()}.${extension}`;
   }
 
   // async getStorageSize(prefix) {
