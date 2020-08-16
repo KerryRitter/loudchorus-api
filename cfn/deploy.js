@@ -3,12 +3,12 @@ const { readFileSync } = require("fs");
 
 class DeployUtils {
   /**
-   * @param {string} command
+   * @param {string} file The file path
    * @returns {{params: { [key: string]: string }, paramsString: string}}
    */
-  getParameters() {
-    const params = JSON.parse(readFileSync('./cfn/parameters.json'));
-    const paramsString = Object.keys(params).map(key => JSON.stringify(`${key}=${params[key]}`)).join(' ');
+  getParameters(file) {
+    const params = JSON.parse(readFileSync(file));
+    const paramsString = Object.keys(params).map(key => `${key}=${JSON.stringify(params[key])}`).join(' ');
     return {
       params,
       paramsString,
@@ -41,7 +41,7 @@ class ApiDeployer {
   utils = new DeployUtils();
 
   /**
-   * @param { { stackName: string, profile: string, stagingBucket: string }} options 
+   * @param { { stackName: string, profile: string, stagingBucket: string, parametersFilePath: string }} options 
    */
   constructor(options) {
     this.options = options;
@@ -73,7 +73,7 @@ class ApiDeployer {
    * @returns {Promise<void>}
    */
   async cfn() {
-    const { paramsString } = this.utils.getParameters();
+    const { paramsString } = this.utils.getParameters(this.options.parametersFilePath);
 
     try {
       console.log(await this.utils.runCommand([
@@ -93,9 +93,10 @@ class ApiDeployer {
 }
 
 new ApiDeployer({
-  stackName: 'loudchorus-api-dev',
-  profile: 'personal',
-  stagingBucket: 'kerryritter-deploy-bucket',
+  stackName: 'loudchorus-api-prod',
+  profile: 'default',
+  stagingBucket: 'appfabricator-cloudformation',
+  parametersFilePath: './cfn/parameters-prod.json',
 })
   .deploy()
   .then(() => console.log('Done!'))

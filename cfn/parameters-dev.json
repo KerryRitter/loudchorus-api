@@ -6,8 +6,5 @@
   "UiDomainName": "loudchorus.beermoney.dev",
   "ArtistPortalDomainName": "",
   "DomainName": "loudchorus-api.beermoney.dev",
-  "FacebookAppSecret": "",
-  "FacebookAppId": "",
-  "GoogleAppSecret": "",
-  "GoogleAppId": ""
+  "QldbLedgerName": "loudchorus-api-db-dev"
 }

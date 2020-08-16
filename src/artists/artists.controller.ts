@@ -75,7 +75,6 @@ export class ArtistsController {
     artist.name = artistChanges.name;
     artist.shortDescription = artistChanges.shortDescription;
     artist.imageUrl = artistChanges.imageUrl ?? '';
-    artist.releases = [];
     await this.repo.replace(artist.id, artist);
 
     return await this.retrieve(artistChanges.slug);

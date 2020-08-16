@@ -47,7 +47,6 @@ Resources:
           IDP_BASEPATH: !Ref IdpBasePath
           JWKS_URI: !Ref JwksUrl
           KMS_KEY: !Ref KmsKey
-          ALLOW_ORIGIN: !Sub https://${UiDomainName},https://${ArtistPortalDomainName}
           API_DOMAIN_NAME: !Ref DomainName
           UI_DOMAIN_NAME: !Ref UiDomainName
           ARTIST_PORTAL_DOMAIN_NAME: !Ref ArtistPortalDomainName

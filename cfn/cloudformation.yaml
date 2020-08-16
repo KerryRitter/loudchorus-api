@@ -13,6 +13,8 @@ Parameters:
     Type: String
   ArtistPortalDomainName:
     Type: String
+  QldbLedgerName:
+    Type: String
   # GoogleAppId:
   #   Type: String
   # GoogleAppSecret:
@@ -31,10 +33,10 @@ Resources:
         AppName: !Ref AppName
         Environment: !Ref Environment
         UiDomainName: !Ref UiDomainName 
-        GoogleAppId: !Ref GoogleAppId 
-        GoogleAppSecret: !Ref GoogleAppSecret 
-        FacebookAppId: !Ref FacebookAppId 
-        FacebookAppSecret: !Ref FacebookAppSecret 
+        # GoogleAppId: !Ref GoogleAppId 
+        # GoogleAppSecret: !Ref GoogleAppSecret 
+        # FacebookAppId: !Ref FacebookAppId 
+        # FacebookAppSecret: !Ref FacebookAppSecret 
 
   Api:
     Type: AWS::CloudFormation::Stack
@@ -57,4 +59,4 @@ Resources:
     Properties:
       TemplateURL: cloudformation-qldb.yaml
       Parameters:
-        AppName: !Ref AppName
+        QldbLedgerName: !Ref QldbLedgerName

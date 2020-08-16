@@ -1,13 +1,13 @@
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
-  AppName:
+  QldbLedgerName:
     Type: String
 
 Resources:
   Qldb:
     Type: AWS::QLDB::Ledger
     Properties: 
-      Name: !Sub '${AppName}-db'
+      Name: !Ref QldbLedgerName
       DeletionProtection: true
       PermissionsMode: ALLOW_ALL

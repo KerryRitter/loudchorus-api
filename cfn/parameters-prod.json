@@ -1,0 +1,10 @@
+{
+  "Environment": "prod",
+  "AppName": "loudchorus-api",
+  "HostedZoneId": "Z033379612958PWIQ840T",
+  "CertificateArn": "arn:aws:acm:us-east-1:063379480384:certificate/3274b5b6-e87f-47b1-a727-87902c448047",
+  "UiDomainName": "www.loudchor.us",
+  "ArtistPortalDomainName": "ap.loudchor.us",
+  "DomainName": "api.loudchor.us",
+  "QldbLedgerName": "loudchorus-api-db-prod"
+}
