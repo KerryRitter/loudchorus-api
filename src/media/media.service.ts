@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 @Injectable()
 export class MediaService {
   private readonly s3: S3;
+  private readonly twelveMb = 10485760 * 1.2;
 
   constructor(
     private readonly configService: ConfigService,
@@ -29,24 +30,35 @@ export class MediaService {
       Fields: {
         key: this.generateRandomName(file),
       },
+      Conditions: [
+        ['content-length-range', 0, this.twelveMb / 4],
+        // ['starts-with', '$Content-Type', 'image/'],
+      ],
     });
 
     return post;
   }
 
-  generateTrackUploadPost(file: string, sizeLimit: number) {
+  generateTrackUploadPost(file: string) {
     const post = this.s3.createPresignedPost({
       Bucket: this.configService.get('WASABI_TRACKS_BUCKET'),
       Fields: {
         key: this.generateRandomName(file),
       },
-      Conditions: [['content-length-range', 0, sizeLimit]],
+      Conditions: [
+        ['content-length-range', 0, this.twelveMb],
+        // ['starts-with', '$Content-Type', 'audio/mpeg'],
+      ],
     });
     return post;
   }
 
-  generateDownloadUrl(bucket: string, key: string) {
-    return this.s3.getSignedUrl('getObject', { Bucket: bucket, Key: key });
+  generateTrackDownloadUrl(key: string) {
+    const url = this.s3.getSignedUrl('getObject', {
+      Bucket: this.configService.get('WASABI_TRACKS_BUCKET'),
+      Key: key,
+    });
+    return { url };
   }
 
   private generateRandomName(fileName: string) {

@@ -1,4 +1,4 @@
-import { Controller, Post, Param } from '@nestjs/common';
+import { Controller, Post, Param, Get } from '@nestjs/common';
 import { MediaService } from './media.service';
 
 @Controller('media')
@@ -12,6 +12,11 @@ export class MediaController {
 
   @Post('presign/track/:file')
   generateTrackUploadPost(@Param('file') file: string) {
-    return this.mediaService.generateTrackUploadPost(file, 10000);
+    return this.mediaService.generateTrackUploadPost(file);
+  }
+
+  @Get('download/track/:file')
+  generateTrackDownloadUrl(@Param('file') file: string) {
+    return this.mediaService.generateTrackDownloadUrl(file);
   }
 }
