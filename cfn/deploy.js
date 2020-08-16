@@ -95,7 +95,7 @@ class ApiDeployer {
 new ApiDeployer({
   stackName: 'loudchorus-api-prod',
   profile: 'default',
-  stagingBucket: 'appfabricator-cloudformation',
+  stagingBucket: 'appfabricator-cloudformation-us-east-1',
   parametersFilePath: './cfn/parameters-prod.json',
 })
   .deploy()

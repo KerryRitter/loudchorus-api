@@ -59,7 +59,7 @@ Resources:
             Method: any
             RestApiId: !Ref Api
       Handler: dist/lambda-entry-point.handler
-      MemorySize: 512
+      MemorySize: 256
       Role: !GetAtt ApiLambdaRole.Arn
       Runtime: nodejs12.x
       Timeout: 30
@@ -67,6 +67,7 @@ Resources:
   ApiLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub ${AppName}-role-${Environment}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:

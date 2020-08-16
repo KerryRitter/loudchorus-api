@@ -49,10 +49,11 @@ Resources:
         HostedZoneId: !Ref HostedZoneId
         CertificateArn: !Ref CertificateArn
         UiDomainName: !Ref UiDomainName
+        ArtistPortalDomainName: !Ref ArtistPortalDomainName
         IdpClientId: !GetAtt Cognito.Outputs.IdpClientId
         IdpBasePath: !GetAtt Cognito.Outputs.IdpBasePath
         JwksUrl: !GetAtt Cognito.Outputs.JkwsUrl
-        QldbLedgerName: !Sub '${AppName}-db'
+        QldbLedgerName: !Ref QldbLedgerName
 
   Qldb:
     Type: AWS::CloudFormation::Stack
