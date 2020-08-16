@@ -18,6 +18,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { kebabCase, pullAt } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
+// TODO: This work belongs in a service but I'm being lazy :)
+
 @Controller('')
 export class ArtistsController {
   constructor(
